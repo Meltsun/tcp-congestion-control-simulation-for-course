@@ -31,30 +31,26 @@ if(agree==('参数设置')):
 else:
     st.subheader('当前状态')
     st.write(f"""
-        时间：{simulator.time}\n
         传输轮次：{simulator.round}\n
-        cwnd:{simulator.cwnd}\n
+        时间：{simulator.time}\n
+        拥塞窗口cwnd：{simulator.cwnd}\n
         """)
-
-    if(simulator.isAsTurn):
-        st.subheader(f"当前A即将发送报文段 M{simulator.wSend} ,此报文段将：")
-        if(st.button('成功到达')):
-            simulator.send_succeed()
-        if(st.button('中途丢失')):
-            simulator.send_fail()
-        with st.form("my_form"):
-            rto=st.slider('数量：',step=1,min_value=1)
+    with st.form("single"):
+        a=False
+        b=False
+        if(simulator.isAsTurn):
+            a=st.radio(f"A即将发送报文段 M{simulator.wSend} ,此报文段将：",['成功到达','丢失'])=='成功到达'
+        if(simulator.isBsTurn): 
+            b=st.radio(f"当前B收到了报文段 M{simulator.receive} ,此报文段将：",['成功到达','丢失'])=='成功到达'
+        issubmited=st.form_submit_button("确定")
+    
+    numMaxSendMany=simulator.cwnd+simulator.wStart-simulator.wSend
+    if(numMaxSendMany>1 and simulator.isAsTurn and not simulator.isBsTurn):
+        with st.form("multi"):
+            rto=st.slider('数量：',step=1,min_value=1,max_value=numMaxSendMany,value=numMaxSendMany)
             issubmited=st.form_submit_button("批量发送报文段并成功确认")
             if(issubmited):
-                simulator.batch_send()
-    else:
-        st.subheader(f"当前B收到了报文段 M{simulator.receive} ,此报文段将：")
-        if(st.button('成功到达')):
-            simulator.send_success()
-        if(st.button('中途丢失')):
-            simulator.send_fail()
-    
-    
+                simulator.send_many(issubmited)
 
     #----------------------------------------------------------------
 

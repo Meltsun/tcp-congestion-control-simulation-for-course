@@ -1,1 +1,4 @@
 venv
+*.pptx
+Simulator改良结构伪代码.txt
+__pycache__/Simulator.cpython-310.pyc
