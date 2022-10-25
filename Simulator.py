@@ -1,5 +1,5 @@
 class Simulator:
-    def __init__(self):
+    def __init__(self,ssthresh,rto,a2b,b2a):
         self.isAsTurn=True#轮到谁
         self.isBsTurn=True#轮到谁
         self.time=1#传输时间
@@ -12,13 +12,13 @@ class Simulator:
         self.wAck=1#下一个确认
         #B
         self.receive=1
-    
-        
 
-    def restart(self,ssthresh,rto,a2b,b2a):
+    def update(self):
         pass
+
     def send(self,isASuccessful,isBSuccessful):
         pass
+    
     def send_many(self,n):
         pass
     

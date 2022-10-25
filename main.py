@@ -1,10 +1,11 @@
 import streamlit as st
 from Simulator import Simulator
 st.title('TCP拥塞控制演示')
-simulator=Simulator()
-agree = st.sidebar.radio('',['参数设置','实验运行'])
+if 'isStarted' not in st.session_state:
+    st.session_state['isStarted']=False
+
 #---------------------------------------------------------------
-if(agree==('参数设置')):
+if(not st.session_state.isStarted):
     st.header('简介')
     st.write('''
         此应用用于进行TCP拥塞控制算法的演示，
@@ -23,30 +24,39 @@ if(agree==('参数设置')):
         rto=st.number_input('重传时间（RTO）：',step=1,min_value=1)
         a2b=st.number_input('A → B 时延：',step=1,min_value=1)
         b2a=st.number_input('B → A 时延：',step=1,min_value=1)
-        # Every form must have a submit button.
-        issubmited=st.form_submit_button("应用参数")
-        if(issubmited):
-            simulator.restart(ssthresh,rto,a2b,b2a)
+        def _():
+            st.session_state['simulator']=Simulator(ssthresh,rto,a2b,b2a)
+            st.session_state['isStarted']=True
+        st.form_submit_button("应用参数",on_click=_)
     #----------------------------------------------------------------
 else:
-    st.subheader('当前状态')
-    st.write(f"""
-        传输轮次：{simulator.round}\n
-        时间：{simulator.time}\n
-        拥塞窗口cwnd：{simulator.cwnd}\n
-        """)
-    with st.form("single"):
-        a=False
+    simulator=st.session_state.simulator
+    simulator:Simulator
+    simulator.update()
+    with st.sidebar.form("single"):
+        st.header('当前状态')
+        st.write(f"""
+            传输轮次：{simulator.round}\n
+            拥塞窗口cwnd：{simulator.cwnd}\n
+            时刻：{simulator.time}
+            """)
         b=False
         if(simulator.isAsTurn):
             a=st.radio(f"A即将发送报文段 M{simulator.wSend} ,此报文段将：",['成功到达','丢失'])=='成功到达'
+        else:
+            a=False
+            st.radio(f"A无法发送报文段")
+
         if(simulator.isBsTurn): 
-            b=st.radio(f"当前B收到了报文段 M{simulator.receive} ,此报文段将：",['成功到达','丢失'])=='成功到达'
+            b=st.radio(f"B收到了报文段 M{simulator.receive} ,此报文段将：",['成功到达','丢失'])=='成功到达'
+        else:
+            b=False
+            st.radio(f"B没有接收到报文段")
         issubmited=st.form_submit_button("确定")
     
     numMaxSendMany=simulator.cwnd+simulator.wStart-simulator.wSend
     if(numMaxSendMany>1 and simulator.isAsTurn and not simulator.isBsTurn):
-        with st.form("multi"):
+        with st.form("many"):
             rto=st.slider('数量：',step=1,min_value=1,max_value=numMaxSendMany,value=numMaxSendMany)
             issubmited=st.form_submit_button("批量发送报文段并成功确认")
             if(issubmited):
